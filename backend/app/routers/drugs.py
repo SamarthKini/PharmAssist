@@ -1,69 +1,49 @@
-from fastapi import APIRouter, Depends, HTTPException
-from sqlmodel import Session, select
+from fastapi import APIRouter, Depends, HTTPException, Query
+from sqlmodel import Session, select, func
 from app.database import get_session
 from app.models import Medicine, MedicineRead, MedicineAlternatives
-from sqlalchemy import or_, and_
-
 
 router = APIRouter()
 
-@router.get("/search", response_model=MedicineAlternatives)
-async def search_medicines(name: str, session: Session = Depends(get_session)):
+@router.get("/search")  
+async def search_medicines(
+    name: str,
+    skip: int = Query(0, ge=0, description="Number of alternatives to skip"),
+    limit: int = Query(10, ge=1, le=100, description="Number of alternatives to return"),
+    session: Session = Depends(get_session)
+):
     medicine = session.exec(
-        select(Medicine).where(Medicine.name.ilike(f"{name}%"))
+        select(Medicine)
+        .where(Medicine.name.ilike(f"{name}%"))
         .where(Medicine.status == True)
     ).first()
 
     if not medicine:
         raise HTTPException(status_code=404, detail="Medicine not found")
-    
-    
-    alternatives = []
-    # if medicine.salt:
-    #     primary_salt = medicine.salt.split()[0].strip()
-    #     alternatives = session.exec(
-    #         select(Medicine)
-    #         .where(Medicine.salt.contains(primary_salt))
-    #         .where(Medicine.id != medicine.id)
-    #         .where(Medicine.status == True)
-    #         .limit(5)
-    #     ).all()
 
-    # return MedicineAlternatives(
-    #     main_medicine = MedicineRead(**medicine.dict()),
-    #     alternatives = [MedicineRead(**alternative.dict())for alternative in alternatives]
-    # )
-    if medicine.salt:
-    #     salt_components = [s.strip() for s in medicine.salt.split("+") if s.strip()]
-    #     if salt_components:
-    #         query = select(Medicine).where(Medicine.id != medicine.id).where(Medicine.status == True)
-    #         or_conditions = []
-    #         for comp in salt_components:
-    #             or_conditions.append(Medicine.salt.contains(comp))
-            
-    #         query = query.where(or_(*or_conditions) if or_conditions else query)
-    #         # alternatives = session.exec(query.limit(10)).all()
-    #         alternatives = session.exec(query).all()
-    
-    # return MedicineAlternatives(
-    #     main_medicine=MedicineRead(**medicine.dict()),
-    #     alternatives=[MedicineRead(**alt.dict()) for alt in alternatives]
-    # )
-        normalized_salt = medicine.salt.lower().strip()
-        
-        salt_components = sorted([comp.strip() for comp in normalized_salt.split("+")])
-        
-        normalized_salt = " + ".join(salt_components)
-        
-        alternatives = session.exec(
-            select(Medicine)
-            .where(Medicine.id != medicine.id)
-            .where(Medicine.status == True)
-            .where(Medicine.salt != None)  
-            .where(Medicine.salt.ilike(f"{normalized_salt}"))
-        ).all()
-    
-    return MedicineAlternatives(
-        main_medicine=MedicineRead(**medicine.dict()),
-        alternatives=[MedicineRead(**alt.dict()) for alt in alternatives]
+    alternatives_query = select(Medicine).where(
+        Medicine.id != medicine.id,
+        Medicine.status == True,
+        Medicine.salt.isnot(None)
     )
+
+    if medicine.salt:
+        salt_components = sorted([comp.strip() for comp in medicine.salt.lower().split("+") if comp.strip()])
+        normalized_salt = " + ".join(salt_components)
+        alternatives_query = alternatives_query.where(Medicine.salt.ilike(normalized_salt))
+
+    total = session.exec(
+        select(func.count()).select_from(alternatives_query.subquery())
+    ).one()
+
+    alternatives = session.exec(
+        alternatives_query.offset(skip).limit(limit)
+    ).all()
+
+    return {
+        "main_medicine": MedicineRead(**medicine.dict()),
+        "alternatives": [MedicineRead(**alt.dict()) for alt in alternatives],
+        "total": total,
+        "skip": skip,
+        "limit": limit,
+    }
