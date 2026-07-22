@@ -9,7 +9,7 @@ router = APIRouter()
 async def search_medicines(
     name: str,
     skip: int = Query(0, ge=0, description="Number of alternatives to skip"),
-    limit: int = Query(10, ge=1, le=100, description="Number of alternatives to return"),
+    limit: int = Query(None, ge=1, description="Number of alternatives to return"),
     session: Session = Depends(get_session)
 ):
     medicine = session.exec(
