@@ -6,16 +6,21 @@ import {
   PlusCircle,
   Search,
   ShieldCheck,
-} from 'lucide-react';
+  Check,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
 import { usePrescription } from '../context/PrescriptionContext';
 import axios from '../services/api';
+
 
 const DrugFinder = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [results, setResults] = useState(null);
   const [loading, setLoading] = useState(false);
-  const { addToPrescription } = usePrescription();
-
+  const { prescription, addToPrescription } = usePrescription();
+  const [currentPage, setCurrentPage] = useState(1);
+const medicinesPerPage = 3;
   const searchMedicines = async () => {
     if (!searchTerm.trim()) return;
     setLoading(true);
@@ -25,6 +30,7 @@ const DrugFinder = () => {
         `http://127.0.0.1:8000/search?name=${encodeURIComponent(searchTerm)}`
       );
       setResults(response);
+      setCurrentPage(1);
     } catch (error) {
       console.error('Search failed:', error);
       alert('Medicine not found. Please try another search term.');
@@ -35,6 +41,13 @@ const DrugFinder = () => {
 
   const mainMedicine = results?.main_medicine;
   const alternatives = results?.alternatives ?? [];
+  const totalPages = Math.ceil(alternatives.length / medicinesPerPage);
+
+const startIndex = (currentPage - 1) * medicinesPerPage;
+const currentAlternatives = alternatives.slice(
+  startIndex,
+  startIndex + medicinesPerPage
+);
 
   return (
     <div className="section-card">
@@ -101,8 +114,33 @@ const DrugFinder = () => {
                 {/* change here */}
               </span>
             </div>
+            <div className="medicine-layout">
+  <div className="medicine-summary">
+    <div className="info-card">
+      <span className="info-label">Salt Composition</span>
+      <p>{mainMedicine.salt || 'N/A'}</p>
+    </div>
 
-            <div className="info-grid">
+    <div className="info-card">
+      <span className="info-label">Price</span>
+      <p>₹{mainMedicine.price?.toFixed(2) || 'N/A'}</p>
+    </div>
+
+    <div className="info-card">
+      <span className="info-label">Side Effects</span>
+      <p>{mainMedicine.side_effects || 'N/A'}</p>
+    </div>
+  </div>
+
+  <div className="medicine-description">
+    <div className="info-card description-card">
+      <span className="info-label">Description</span>
+      <p>{mainMedicine.description || 'N/A'}</p>
+    </div>
+  </div>
+</div>
+
+             {/* <div className="info-grid">
               <div className="info-card">
                 <span className="info-label">Salt Composition</span>
                 <p>{mainMedicine.salt || 'N/A'}</p>
@@ -118,13 +156,35 @@ const DrugFinder = () => {
               <div className="info-card info-card-wide description-card">
                 <span className="info-label">Description</span>
                 <p>{mainMedicine.description || 'N/A'}</p>
-              </div>
-            </div>
+              </div> 
+            </div> */}
 
-            <button type="button" className="primary-btn full-width" onClick={() => addToPrescription(mainMedicine)}>
-              <PlusCircle size={16} />
-              Add to Prescription
-            </button>
+           {(() => {
+  const isAdded = prescription.some(
+    (item) => item.id === mainMedicine.id
+  );
+
+  return (
+    <button
+      type="button"
+      className={`full-width ${isAdded ? "added-btn" : "primary-btn"}`}
+      onClick={() => addToPrescription(mainMedicine)}
+      disabled={isAdded}
+    >
+      {isAdded ? (
+        <>
+          <Check size={16} />
+          Added
+        </>
+      ) : (
+        <>
+          <PlusCircle size={16} />
+          Add to Prescription
+        </>
+      )}
+    </button>
+  );
+})()}
           </div>
 
           {alternatives.length > 0 && (
@@ -134,7 +194,7 @@ const DrugFinder = () => {
                 <span>{alternatives.length} alternatives</span>
               </div>
 
-              {alternatives.map((med) => (
+              {currentAlternatives.map((med) => (
                 <div key={med.id} className="medicine-card">
                   <div className="medicine-card-copy">
                     <h4>{med.name}</h4>
@@ -144,12 +204,65 @@ const DrugFinder = () => {
                     {/* change here */}
                   </div>
 
-                  <button type="button" className="secondary-btn" onClick={() => addToPrescription(med)}>
-                    <PlusCircle size={16} />
-                    Add
-                  </button>
+                  {(() => {
+  const isAdded = prescription.some((item) => item.id === med.id);
+
+  return (
+    <button
+      type="button"
+      className={isAdded ? "added-btn" : "secondary-btn"}
+      onClick={() => addToPrescription(med)}
+      disabled={isAdded}
+    >
+      {isAdded ? (
+        <>
+          <Check size={16} />
+          Added
+        </>
+      ) : (
+        <>
+          <PlusCircle size={16} />
+          Add
+        </>
+      )}
+    </button>
+  );
+})()}
                 </div>
               ))}
+              {totalPages > 1 && (
+  <div className="pagination">
+    <button
+      className="page-nav"
+      onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+      disabled={currentPage === 1}
+    >
+      <ChevronLeft size={18} />
+    </button>
+
+    {Array.from({ length: totalPages }, (_, index) => (
+      <button
+        key={index + 1}
+        className={`page-number ${
+          currentPage === index + 1 ? "active" : ""
+        }`}
+        onClick={() => setCurrentPage(index + 1)}
+      >
+        {index + 1}
+      </button>
+    ))}
+
+    <button
+      className="page-nav"
+      onClick={() =>
+        setCurrentPage((p) => Math.min(p + 1, totalPages))
+      }
+      disabled={currentPage === totalPages}
+    >
+      <ChevronRight size={18} />
+    </button>
+  </div>
+)}
             </div>
           )}
 

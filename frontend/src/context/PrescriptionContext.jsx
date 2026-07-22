@@ -6,13 +6,17 @@ export function PrescriptionProvider({ children }) {
   const [prescription, setPrescription] = useState([]);
 
   const addToPrescription = (medicine) => {
-    setPrescription(prev => 
-      prev.some(item => item.id === medicine.id) ? prev : [...prev, medicine]
+    setPrescription((prev) =>
+      prev.some((item) => item.id === medicine.id)
+        ? prev
+        : [...prev, medicine]
     );
   };
 
   const removeFromPrescription = (id) => {
-    setPrescription(prev => prev.filter(med => med.id !== id));
+    setPrescription((prev) =>
+      prev.filter((med) => med.id !== id)
+    );
   };
 
   return (
@@ -20,7 +24,7 @@ export function PrescriptionProvider({ children }) {
       value={{
         prescription,
         addToPrescription,
-        removeFromPrescription
+        removeFromPrescription,
       }}
     >
       {children}

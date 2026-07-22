@@ -9,11 +9,11 @@ const ChatBot = () => {
   const [message, setMessage] = useState('');
   const [chatHistory, setChatHistory] = useState([]);
   const [isTyping, setIsTyping] = useState(false);
-  const { prescription } = usePrescription();
+  const { prescription, removeFromPrescription } = usePrescription();
   const messagesEndRef = useRef(null);
 
   const sendMessage = async () => {
-    if (!message.trim()) return;
+    if (!message.trim() || isTyping) return;
 
     const userMessage = { sender: 'user', text: message };
     setChatHistory((prev) => [...prev, userMessage]);
@@ -51,7 +51,7 @@ const ChatBot = () => {
   }, [chatHistory, isTyping]);
 
   return (
-    <div className="section-card chat-card">
+    <div id="chat-assistant" className="section-card chat-card">
       <div className="section-heading">
         <div>
           <span className="section-kicker">Assistant</span>
@@ -95,26 +95,58 @@ const ChatBot = () => {
         <div className="chat-input-wrap">
           <div className="chat-input-shell">
             <Sparkles size={16} className="input-icon" />
-            <input
+              <input
               type="text"
               value={message}
               onChange={(e) => setMessage(e.target.value)}
-              placeholder="Ask about your medications..."
-              onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
+              placeholder={
+                isTyping
+                  ? "AI is generating a response..."
+                  : "Ask about your medications..."
+              }
+              disabled={isTyping}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !isTyping) {
+                  sendMessage();
+                }
+              }}
             />
           </div>
-          <button type="button" className="primary-btn" onClick={sendMessage} disabled={isTyping}>
-            <SendHorizonal size={16} />
-            Send
-          </button>
+              <button
+              type="button"
+              className="primary-btn"
+              onClick={sendMessage}
+              disabled={isTyping || !message.trim()}
+            >
+              {isTyping ? (
+                <>
+                  <span className="spinner" />
+                  Thinking...
+                </>
+              ) : (
+                <>
+                  <SendHorizonal size={16} />
+                  Send
+                </>
+              )}
+            </button>
         </div>
 
         <div className="prescription-context">
           <strong>Current Prescription:</strong>
           {prescription.length > 0 ? (
             prescription.map((med) => (
-              <span key={med.id}>
+              <span className="prescription-pill" key={med.id}>
                 {med.name} (₹{med.price?.toFixed(2) || 'N/A'})
+
+                <button
+                  type="button"
+                  className="remove-pill"
+                  onClick={() => removeFromPrescription(med.id)}
+                  aria-label={`Remove ${med.name}`}
+                >
+                  ×
+                </button>
               </span>
             ))
           ) : (
