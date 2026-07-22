@@ -1,0 +1,30 @@
+
+services:
+  ui-frontend:
+    image: frontend
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+
+    ports:
+      - "80:5173"
+
+  backend:
+    image: backend
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+
+    volumes:
+      - ./backend:/app         
+      - /app/__pycache__ 
+
+    env_file:
+      - ./backend/.env
+
+    ports:
+     - "8000:8000"
