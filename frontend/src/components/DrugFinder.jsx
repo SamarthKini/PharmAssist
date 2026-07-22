@@ -48,6 +48,21 @@ const currentAlternatives = alternatives.slice(
   startIndex,
   startIndex + medicinesPerPage
 );
+const getVisiblePages = () => {
+  if (totalPages <= 5) {
+    return Array.from({ length: totalPages }, (_, i) => i + 1);
+  }
+
+  const windowStart = Math.min(currentPage, totalPages - 4);
+  const visiblePages = Array.from(
+    { length: 5 },
+    (_, index) => windowStart + index
+  );
+
+  return visiblePages[4] < totalPages
+    ? [...visiblePages, "...", totalPages]
+    : visiblePages;
+};
 
   return (
     <div className="section-card">
@@ -240,17 +255,21 @@ const currentAlternatives = alternatives.slice(
       <ChevronLeft size={18} />
     </button>
 
-    {Array.from({ length: totalPages }, (_, index) => (
-      <button
-        key={index + 1}
-        className={`page-number ${
-          currentPage === index + 1 ? "active" : ""
-        }`}
-        onClick={() => setCurrentPage(index + 1)}
-      >
-        {index + 1}
-      </button>
-    ))}
+    {getVisiblePages().map((page, index) =>
+  page === "..." ? (
+    <span key={`dots-${index}`} className="page-dots">
+      ...
+    </span>
+  ) : (
+    <button
+      key={`page-${page}`}
+      className={`page-number ${currentPage === page ? "active" : ""}`}
+      onClick={() => setCurrentPage(page)}
+    >
+      {page}
+    </button>
+  )
+)}
 
     <button
       className="page-nav"
