@@ -97,7 +97,8 @@ const DrugFinder = () => {
               </div>
               <span className="status-pill">
                 <ShieldCheck size={14} />
-                {mainMedicine.status ? 'Discontinued' : 'Active'}
+                {mainMedicine.status ? 'Discontinued' : 'Active'} 
+                {/* change here */}
               </span>
             </div>
 
@@ -140,6 +141,7 @@ const DrugFinder = () => {
                     <p><strong>Salt:</strong> {med.salt || 'N/A'}</p>
                     <p><strong>Price:</strong> ₹{med.price?.toFixed(2) || 'N/A'}</p>
                     <p><strong>Status:</strong> {med.status ? 'Discontinued' : 'Active'}</p>
+                    {/* change here */}
                   </div>
 
                   <button type="button" className="secondary-btn" onClick={() => addToPrescription(med)}>
