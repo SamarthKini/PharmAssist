@@ -80,7 +80,6 @@ Rules:
                 medicine = session.exec(
                     select(Medicine).where(Medicine.name == name)
                     .where(Medicine.status == 1)
-                    # change here
                 ).first()
                 if medicine:
                     interactions = "None"

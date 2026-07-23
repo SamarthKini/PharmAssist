@@ -126,7 +126,6 @@ const getVisiblePages = () => {
               <span className="status-pill">
                 <ShieldCheck size={14} />
                 {mainMedicine.status == 0 ? 'Discontinued' : 'Active'} 
-                {/* change here */}
               </span>
             </div>
             <div className="medicine-layout">
@@ -216,7 +215,6 @@ const getVisiblePages = () => {
                     <p><strong>Salt:</strong> {med.salt || 'N/A'}</p>
                     <p><strong>Price:</strong> ₹{med.price?.toFixed(2) || 'N/A'}</p>
                     <p><strong>Status:</strong> {med.status == 0 ? 'Discontinued' : 'Active'}</p>
-                    {/* change here */}
                   </div>
 
                   {(() => {
