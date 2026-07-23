@@ -15,7 +15,8 @@ async def search_medicines(
     medicine = session.exec(
         select(Medicine)
         .where(Medicine.name.ilike(f"{name}%"))
-        .where(Medicine.status == True)
+        .where(Medicine.status == 1)
+        # change here
     ).first()
 
     if not medicine:
