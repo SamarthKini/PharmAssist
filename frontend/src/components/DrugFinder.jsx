@@ -27,7 +27,7 @@ const medicinesPerPage = 3;
 
     try {
       const response = await axios.get(
-        `${VITE_BACKEND_URL}/search?name=${encodeURIComponent(searchTerm)}`
+        `${import.meta.env.VITE_BACKEND_URL}/search?name=${encodeURIComponent(searchTerm)}`
       );
       setResults(response);
       setCurrentPage(1);
