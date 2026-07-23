@@ -5,6 +5,16 @@ from app.models import Medicine, MedicineRead, MedicineAlternatives
 
 router = APIRouter()
 
+@router.get("/fetch-all")
+def retrieve_medicines(session: Session = Depends(get_session)):
+    medicine = session.exec(select(Medicine)).first();
+
+    if not medicine:
+        raise HTTPException(status_code=404, detail="Medicine not found")
+
+    else:
+        return { "medicines" : medicine }
+
 @router.get("/search")  
 async def search_medicines(
     name: str,
@@ -12,6 +22,7 @@ async def search_medicines(
     limit: int = Query(None, ge=1, description="Number of alternatives to return"),
     session: Session = Depends(get_session)
 ):
+    print("Medicine asked : ", name)
     medicine = session.exec(
         select(Medicine)
         .where(Medicine.name.ilike(f"{name}%"))
@@ -23,7 +34,7 @@ async def search_medicines(
 
     alternatives_query = select(Medicine).where(
         Medicine.id != medicine.id,
-        Medicine.status == True,
+        Medicine.status == 1,
         Medicine.salt.isnot(None)
     )
 
